@@ -1,8 +1,8 @@
-# 🍒 Cherry API Hub —— 基于 Cherry Studio 风格的 API 汇总与中转平台
+# 🍒 YY API Hub —— 基于 Cherry Studio 风格的 API 汇总与中转平台
 
 ## 📖 项目简介
 
-**Cherry API Hub** 是一款受 **Cherry Studio** 界面美学与交互逻辑启发而设计的 **API 汇总与中转网站**。  
+**YY  API Hub** 是一款受 **YY  Studio** 界面美学与交互逻辑启发而设计的 **API 汇总与中转网站**。  
 它并非简单的 API 代理，而是一个集 **API 发现、聚合管理、统一中转、用量统计** 于一体的开发者工具平台。
 
 > 🎯 目标用户：AI 应用开发者、多模型调用团队、需要统一 API 入口的企业级项目。
