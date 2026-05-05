@@ -1,3 +1,42 @@
+# 🍒 Cherry API Hub —— 基于 Cherry Studio 风格的 API 汇总与中转平台
+
+## 📖 项目简介
+
+**Cherry API Hub** 是一款受 **Cherry Studio** 界面美学与交互逻辑启发而设计的 **API 汇总与中转网站**。  
+它并非简单的 API 代理，而是一个集 **API 发现、聚合管理、统一中转、用量统计** 于一体的开发者工具平台。
+
+> 🎯 目标用户：AI 应用开发者、多模型调用团队、需要统一 API 入口的企业级项目。
+
+---
+
+## ✨ 核心功能
+
+### 1. 🧩 多源 API 汇总
+- 支持 **OpenAI、Anthropic、Google Gemini、Cohere、国内主流模型（智谱/通义/文心/DeepSeek 等）** 的 API 接入。
+- 提供公开与私有 API 资源市场，可分享或订阅他人上传的可用 API 端点。
+
+### 2. 🔄 智能中转服务
+- 统一请求格式转换，屏蔽不同厂商的 API 差异。
+- 自动负载均衡与故障转移：当某个 API Key 或端点失效时，自动切换备用资源。
+- 支持流式响应（SSE）与普通 HTTP 请求。
+
+### 3. 📊 可视化控制台（Cherry Studio 风格）
+- 深色/浅色双主题，卡片式布局，侧边栏管理。
+- 实时请求监控、用量统计、日志查询。
+- 类似对话界面的 API 测试工具，可直接调试不同模型。
+
+### 4. 🔐 安全与权限控制
+- API Key 与用户角色分离，支持多租户模式。
+- 可设置调用频率、额度限制、白名单 IP。
+- 请求数据默认脱敏，可选加密存储。
+
+### 5. 💰 计费与结算（可选）
+- 按量计费、包月套餐或免费额度模式。
+- 支持 OpenAPI 格式生成账单记录。
+
+---
+
+## 🖥 界面预览（示意图）
 
 <img width="1464" height="749" alt="image" src="https://github.com/user-attachments/assets/50212e01-f9d9-43c0-a92b-513da11dc671" />
 <img width="1895" height="959" alt="image" src="https://github.com/user-attachments/assets/9a5bdb64-4695-44e3-b0b8-5f76a0b96c1e" />
