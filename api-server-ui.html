@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API 网关</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --line: #e7e9ee;
+      --text: #111827;
+      --muted: #8b95a7;
+      --green: #19c37d;
+      --green-soft: #e8fbf3;
+      --red: #ef4444;
+      --shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .title-section {
+      h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
+      }
+      p {
+        margin: 6px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+    }
+
+    .api-docs-btn {
+      height: 40px;
+      padding: 0 16px;
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: .2s ease;
+    }
+
+    .api-docs-btn:hover {
+      opacity: 0.9;
+    }
+
+    .status-card {
+      background: var(--panel);
+      border: 2px solid var(--green);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .status-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(25, 195, 125, 0.5);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-info {
+      h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--green);
+      }
+      p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    }
+
+    .status-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: .2s ease;
+    }
+
+    .action-btn:hover {
+      background: #f9fafb;
+    }
+
+    .action-btn.stop {
+      color: var(--red);
+      border-color: #fee2e2;
+    }
+
+    .api-key-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+      }
+      p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    }
+
+    .input-group {
+      position: relative;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 280px 0 16px;
+      font-family: monospace;
+      font-size: 14px;
+      background: #fafbfc;
+      color: var(--text);
+      outline: none;
+      transition: .2s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(25, 195, 125, 0.08);
+    }
+
+    .input-actions {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 4px;
+    }
+
+    .generate-btn {
+      background: linear-gradient(135deg, var(--green) 0%, #16a34a 100%);
+      color: #fff;
+    }
+
+    .generate-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .input-btn {
+      height: 40px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+
+    .input-btn.secondary {
+      background: #f0f2f6;
+      color: #4b5563;
+    }
+
+    .input-btn.secondary:hover {
+      background: #e5e7eb;
+    }
+
+    .input-btn.primary {
+      background: var(--green);
+      color: #fff;
+    }
+
+    .input-btn.primary:hover {
+      opacity: 0.9;
+    }
+
+    .input-btn.danger {
+      background: #fee2e2;
+      color: var(--red);
+    }
+
+    .input-btn.danger:hover {
+      background: #fecaca;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 16px 0;
+    }
+
+    .auth-header {
+      width: 100%;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 16px;
+      font-family: monospace;
+      font-size: 13px;
+      background: #fafbfc;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      word-break: break-all;
+    }
+
+    .copy-toast {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: var(--text);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: .3s ease;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .copy-toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .key-list {
+      margin-top: 16px;
+    }
+
+    .key-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #fafbfc;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      gap: 12px;
+    }
+
+    .key-value {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text);
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .key-value.masked {
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-section">
+        <h1>API 网关</h1>
+        <p>统一管理多个供应商 API，提供 OpenAI 兼容接口</p>
+      </div>
+      <button class="api-docs-btn" onclick="window.location.href='/diagnose.html'">🧪 测试</button>
+    </div>
+
+    <div class="status-card">
+      <div class="status-left">
+        <div class="status-indicator"></div>
+        <div class="status-info">
+          <h2>运行中</h2>
+          <p>http://127.0.0.1:3000</p>
+        </div>
+      </div>
+      <div class="status-actions">
+        <button class="action-btn" title="刷新">↻</button>
+      </div>
+    </div>
+
+    <div class="api-key-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h3>网关 API 密钥</h3>
+          <p>用于访问网关统一接口的认证令牌</p>
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <input 
+          type="password" 
+          class="input-field" 
+          id="apiKey"
+          value=""
+          placeholder="点击生成新密钥"
+        />
+        <div class="input-actions">
+          <button class="input-btn generate-btn" id="generateKey">🎲 生成</button>
+          <button class="input-btn secondary" id="toggleKey">显示</button>
+          <button class="input-btn primary" id="saveKey">保存</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card-header">
+        <div class="card-title">
+          <h3>已保存的密钥</h3>
+          <p>管理所有有效的网关 API 密钥</p>
+        </div>
+      </div>
+
+      <div class="key-list" id="keyList">
+        <p style="color: var(--muted); font-size: 13px; margin: 0;">加载中...</p>
+      </div>
+    </div>
+
+    <div class="api-key-card">
+      <div class="card-header">
+        <div class="card-title">
+          <h3>授权标头</h3>
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <div class="auth-header" id="authHeader">
+          Authorization: Bearer 
+        </div>
+        <div class="input-actions" style="right: 8px;">
+          <button class="input-btn secondary" id="copyHeader">复制</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copy-toast" id="copyToast">✓ 已复制</div>
+
+  <script>
+    // ========== 登录验证 ==========
+    function getStoredAuthToken() {
+      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    }
+
+    function clearStoredAuthToken() {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+    }
+
+    async function checkAuth() {
+      const token = getStoredAuthToken();
+      
+      try {
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const response = await fetch('/api/session', { headers });
+        const data = await response.json();
+        if (!data.valid) {
+          clearStoredAuthToken();
+          window.location.href = '/login.html';
+          return false;
+        }
+        return true;
+      } catch (error) {
+        clearStoredAuthToken();
+        window.location.href = '/login.html';
+        return false;
+      }
+    }
+
+    function getAuthHeaders() {
+      const token = getStoredAuthToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    async function authFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          ...getAuthHeaders()
+        }
+      });
+      return response;
+    }
+
+    const API_BASE = '/api/gateway';
+    
+    const apiKeyInput = document.getElementById('apiKey');
+    const toggleKey = document.getElementById('toggleKey');
+    const saveKey = document.getElementById('saveKey');
+    const copyHeader = document.getElementById('copyHeader');
+    const authHeader = document.getElementById('authHeader');
+    const copyToast = document.getElementById('copyToast');
+    const generateKey = document.getElementById('generateKey');
+    const keyList = document.getElementById('keyList');
+
+    let isKeyVisible = false;
+    let savedKeys = [];
+
+    // 生成 API Key
+    function generateAPIKey() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      const random = (len) => {
+        let result = '';
+        for (let i = 0; i < len; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      };
+      return `cs-sk-${random(8)}-${random(4)}-${random(4)}-${random(4)}-${random(12)}`;
+    }
+
+    // 更新授权标头
+    function updateAuthHeader(key) {
+      authHeader.textContent = `Authorization: Bearer ${key}`;
+    }
+
+    // 加载已保存的 Key
+    async function loadKeys() {
+      try {
+        const response = await authFetch(`${API_BASE}/keys`);
+        const data = await response.json();
+        savedKeys = data.apiKeys || [];
+        renderKeys();
+        
+        if (savedKeys.length > 0) {
+          apiKeyInput.value = savedKeys[savedKeys.length - 1];
+          updateAuthHeader(savedKeys[savedKeys.length - 1]);
+        }
+      } catch (err) {
+        keyList.innerHTML = '<p style="color: var(--red); font-size: 13px; margin: 0;">加载失败</p>';
+        console.error('Load keys failed:', err);
+      }
+    }
+
+    // 渲染 Key 列表
+    function renderKeys() {
+      if (savedKeys.length === 0) {
+        keyList.innerHTML = '<p style="color: var(--muted); font-size: 13px; margin: 0;">暂无密钥</p>';
+        return;
+      }
+
+      keyList.innerHTML = savedKeys.map((key, index) => `
+        <div class="key-item">
+          <span class="key-value" id="key-${index}">${maskKey(key)}</span>
+          <div style="display: flex; gap: 4px;">
+            <button class="input-btn secondary" onclick="copyKeyAtIndex(${index})">复制</button>
+            <button class="input-btn secondary" onclick="toggleKeyVisibility(${index})">显示</button>
+            ${savedKeys.length > 1 ? `<button class="input-btn danger" onclick="deleteKey(${index})">删除</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 掩码显示 Key
+    function maskKey(key) {
+      if (!key) return '';
+      const prefix = key.substring(0, 8);
+      const suffix = key.substring(key.length - 6);
+      return `${prefix}...${suffix}`;
+    }
+
+    // 保存 Key
+    async function saveNewKey() {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        showToast('请先生成密钥');
+        return;
+      }
+
+      try {
+        const response = await authFetch(`${API_BASE}/keys`, {
+          method: 'POST',
+          body: JSON.stringify({ apiKey: key })
+        });
+
+        if (!response.ok) throw new Error('Save failed');
+        
+        await loadKeys();
+        showToast('✓ 密钥已保存');
+      } catch (err) {
+        showToast('保存失败');
+        console.error('Save failed:', err);
+      }
+    }
+
+    // 删除 Key
+    async function deleteKey(index) {
+      if (!confirm('确定删除此密钥吗？')) return;
+
+      try {
+        const response = await authFetch(`${API_BASE}/keys/${index}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Delete failed');
+        
+        await loadKeys();
+        showToast('✓ 密钥已删除');
+      } catch (err) {
+        showToast('删除失败');
+        console.error('Delete failed:', err);
+      }
+    }
+
+    // 复制指定位置的 Key
+    function copyKeyAtIndex(index) {
+      copyToClipboard(savedKeys[index], '密钥');
+    }
+
+    // 显示/隐藏指定位置的 Key
+    let visibleKeyIndices = new Set();
+    function toggleKeyVisibility(index) {
+      const el = document.getElementById(`key-${index}`);
+      if (visibleKeyIndices.has(index)) {
+        visibleKeyIndices.delete(index);
+        el.textContent = maskKey(savedKeys[index]);
+      } else {
+        visibleKeyIndices.add(index);
+        el.textContent = savedKeys[index];
+      }
+    }
+
+    function showToast(message) {
+      copyToast.textContent = message;
+      copyToast.classList.add('show');
+      setTimeout(() => {
+        copyToast.classList.remove('show');
+      }, 2000);
+    }
+
+    async function copyToClipboard(text, label) {
+      try {
+        await navigator.clipboard.writeText(text);
+        copyToast.textContent = `✓ ${label}已复制`;
+        copyToast.classList.add('show');
+        setTimeout(() => {
+          copyToast.classList.remove('show');
+        }, 2000);
+      } catch (err) {
+        console.error('复制失败:', err);
+      }
+    }
+
+    // 事件绑定
+    generateKey.addEventListener('click', () => {
+      const newKey = generateAPIKey();
+      apiKeyInput.value = newKey;
+      updateAuthHeader(newKey);
+      copyToClipboard(newKey, '新密钥');
+    });
+
+    toggleKey.addEventListener('click', () => {
+      isKeyVisible = !isKeyVisible;
+      apiKeyInput.type = isKeyVisible ? 'text' : 'password';
+      toggleKey.textContent = isKeyVisible ? '隐藏' : '显示';
+    });
+
+    saveKey.addEventListener('click', saveNewKey);
+
+    copyHeader.addEventListener('click', () => {
+      copyToClipboard(authHeader.textContent, '授权标头');
+    });
+
+    // 页面加载时获取 Key 列表
+    (async () => {
+      const authValid = await checkAuth();
+      if (authValid) {
+        loadKeys();
+      }
+    })();
+  </script>
+</body>
+</html>

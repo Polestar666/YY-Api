@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API 测试工具</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f2f5;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+      color: #333;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: monospace;
+    }
+    button {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #059669;
+    }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    .result {
+      background: #1f2937;
+      color: #e5e7eb;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow: auto;
+      margin-top: 12px;
+    }
+    .success { border-left: 4px solid #10b981; }
+    .error { border-left: 4px solid #ef4444; }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.online { background: #d1fae5; color: #065f46; }
+    .status.offline { background: #fee2e2; color: #7f1d1d; }
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .row > *:first-child { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 API 测试工具</h1>
+    
+    <div class="section">
+      <label>服务器状态</label>
+      <div class="row">
+        <button id="checkStatus" onclick="checkStatus()">检查状态</button>
+        <span id="statusDisplay" class="status">等待检查</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <label>API 密钥</label>
+      <input type="text" id="apiKey" placeholder="输入网关 API Key" value="cs-sk-c8046f4c-41c7-4b89-b1e7-fdf19eb3e75e" />
+      <p style="font-size: 12px; color: #666; margin-top: 4px;">网关 API Key 用于访问统一接口</p>
+    </div>
+
+    <div class="section">
+      <label>模型列表</label>
+      <button onclick="loadModels()">获取模型列表</button>
+      <div id="modelsResult" class="result" style="margin-top: 12px;">点击按钮获取模型列表</div>
+    </div>
+
+    <div class="section">
+      <label>选择模型</label>
+      <select id="modelSelect">
+        <option value="">先加载模型列表</option>
+      </select>
+    </div>
+
+    <div class="section">
+      <label>测试消息</label>
+      <textarea id="messageInput">你好！请介绍一下自己。</textarea>
+    </div>
+
+    <div class="section">
+      <button id="sendBtn" onclick="sendTest()">发送测试请求</button>
+      <button style="background: #6b7280; margin-left: 8px;" onclick="clearResults()">清空结果</button>
+      <div id="testResult" class="result" style="margin-top: 12px;">等待测试...</div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3001';
+
+    async function checkStatus() {
+      const statusDisplay = document.getElementById('statusDisplay');
+      try {
+        const response = await fetch(`${API_BASE}/v1/health`);
+        const data = await response.json();
+        statusDisplay.textContent = '在线';
+        statusDisplay.className = 'status online';
+        console.log('Server status:', data);
+      } catch (error) {
+        statusDisplay.textContent = '离线';
+        statusDisplay.className = 'status offline';
+        console.error('Status check failed:', error);
+      }
+    }
+
+    async function loadModels() {
+      const resultDiv = document.getElementById('modelsResult');
+      const modelSelect = document.getElementById('modelSelect');
+      const apiKey = document.getElementById('apiKey').value;
+      
+      try {
+        resultDiv.textContent = '正在加载...';
+        resultDiv.className = 'result';
+        
+        const headers = {};
+        if (apiKey) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+        
+        const response = await fetch(`${API_BASE}/v1/models`, { headers });
+        const data = await response.json();
+        
+        resultDiv.textContent = JSON.stringify(data, null, 2);
+        resultDiv.className = 'result success';
+        
+        if (data.data && data.data.length > 0) {
+          modelSelect.innerHTML = '<option value="">选择一个模型</option>' + 
+            data.data.map(model => `<option value="${model.id}">${model.id}</option>`).join('');
+        }
+      } catch (error) {
+        resultDiv.textContent = `错误: ${error.message}`;
+        resultDiv.className = 'result error';
+      }
+    }
+
+    async function sendTest() {
+      const resultDiv = document.getElementById('testResult');
+      const sendBtn = document.getElementById('sendBtn');
+      const model = document.getElementById('modelSelect').value;
+      const message = document.getElementById('messageInput').value;
+      const apiKey = document.getElementById('apiKey').value;
+      
+      if (!model) {
+        resultDiv.textContent = '请先选择一个模型';
+        resultDiv.className = 'result error';
+        return;
+      }
+      
+      try {
+        sendBtn.disabled = true;
+        resultDiv.textContent = '正在发送请求...';
+        resultDiv.className = 'result';
+        
+        const startTime = Date.now();
+        
+        const headers = { 'Content-Type': 'application/json' };
+        if (apiKey) {
+          headers['Authorization'] = `Bearer ${apiKey}`;
+        }
+        
+        const response = await fetch(`${API_BASE}/v1/chat/completions`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: message }],
+            max_tokens: 500
+          })
+        });
+        
+        const endTime = Date.now();
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`${response.status}: ${JSON.stringify(errorData)}`);
+        }
+        
+        const data = await response.json();
+        
+        resultDiv.textContent = `响应时间: ${endTime - startTime}ms\n\n${JSON.stringify(data, null, 2)}`;
+        resultDiv.className = 'result success';
+        
+      } catch (error) {
+        resultDiv.textContent = `错误: ${error.message}`;
+        resultDiv.className = 'result error';
+        console.error('Test failed:', error);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    function clearResults() {
+      document.getElementById('testResult').textContent = '等待测试...';
+      document.getElementById('testResult').className = 'result';
+    }
+
+    // 页面加载时自动检查状态
+    checkStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网关诊断测试</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    .success { color: #19c37d; }
+    .error { color: #ef4444; }
+    button { padding: 10px 20px; margin: 5px; background: #19c37d; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button.secondary { background: #6b7280; }
+    pre { background: #f3f4f6; padding: 10px; border-radius: 5px; overflow-x: auto; max-height: 200px; }
+    input { width: 100%; padding: 10px; margin: 5px 0; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 网关诊断测试</h1>
+  
+  <div class="section">
+    <h2>1. 基础健康检查</h2>
+    <button id="testHealth">测试 /v1/health</button>
+    <button id="testVendors">获取供应商</button>
+    <button id="testGatewayKeys">获取网关Keys</button>
+    <pre id="result1">等待测试...</pre>
+  </div>
+  
+  <div class="section">
+    <h2>2. 测试网关Key验证</h2>
+    <input id="gatewayKey" type="text" value="cs-sk-c8046f4c-41c7-4b89-b1e7-fdf19eb3e75e" placeholder="网关Key">
+    <button id="testModels">测试 /v1/models</button>
+    <pre id="result2">等待测试...</pre>
+  </div>
+  
+  <div class="section">
+    <h2>3. 管理测试</h2>
+    <button id="openKeyManager">打开 Key 管理页面</button>
+    <button id="openVendorManager">打开供应商管理页面</button>
+    <button id="openTestPage">打开测试页面</button>
+  </div>
+
+  <script>
+    // ========== 登录验证 ==========
+    function getStoredAuthToken() {
+      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    }
+
+    function clearStoredAuthToken() {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+    }
+
+    async function checkAuth() {
+      const token = getStoredAuthToken();
+      
+      try {
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const response = await fetch('/api/session', { headers });
+        const data = await response.json();
+        if (!data.valid) {
+          clearStoredAuthToken();
+          window.location.href = '/login.html';
+          return false;
+        }
+        return true;
+      } catch (error) {
+        clearStoredAuthToken();
+        window.location.href = '/login.html';
+        return false;
+      }
+    }
+
+    function getAuthHeaders() {
+      const token = getStoredAuthToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    async function authFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          ...getAuthHeaders()
+        }
+      });
+      return response;
+    }
+
+    // 页面加载时检查认证
+    (async () => {
+      await checkAuth();
+    })();
+
+    const API_BASE = 'http://localhost:3001';
+    
+    function showResult(el, text, isSuccess) {
+      el.textContent = text;
+      el.className = isSuccess ? 'success' : 'error';
+    }
+    
+    // 测试 /v1/health
+    document.getElementById('testHealth').addEventListener('click', async () => {
+      const el = document.getElementById('result1');
+      try {
+        const response = await fetch(`${API_BASE}/v1/health`);
+        const data = await response.json();
+        showResult(el, `成功！\n${JSON.stringify(data, null, 2)}`, true);
+      } catch (error) {
+        showResult(el, `失败: ${error.message}`, false);
+      }
+    });
+    
+    // 测试 /api/vendors
+    document.getElementById('testVendors').addEventListener('click', async () => {
+      const el = document.getElementById('result1');
+      try {
+        const response = await authFetch(`${API_BASE}/api/vendors`);
+        const data = await response.json();
+        showResult(el, `成功！\n${JSON.stringify(data, null, 2)}`, true);
+      } catch (error) {
+        showResult(el, `失败: ${error.message}`, false);
+      }
+    });
+    
+    // 测试 /api/gateway/keys
+    document.getElementById('testGatewayKeys').addEventListener('click', async () => {
+      const el = document.getElementById('result1');
+      try {
+        const response = await authFetch(`${API_BASE}/api/gateway/keys`);
+        const data = await response.json();
+        showResult(el, `成功！\n${JSON.stringify(data, null, 2)}`, true);
+      } catch (error) {
+        showResult(el, `失败: ${error.message}`, false);
+      }
+    });
+    
+    // 测试 /v1/models
+    document.getElementById('testModels').addEventListener('click', async () => {
+      const el = document.getElementById('result2');
+      const key = document.getElementById('gatewayKey').value.trim();
+      
+      if (!key) {
+        showResult(el, '请输入网关Key', false);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/v1/models`, {
+          headers: { Authorization: `Bearer ${key}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          showResult(el, `成功！\n找到 ${data.data.length} 个模型:\n${JSON.stringify(data, null, 2)}`, true);
+        } else {
+          const error = await response.json();
+          showResult(el, `失败 (${response.status}):\n${JSON.stringify(error, null, 2)}`, false);
+        }
+      } catch (error) {
+        showResult(el, `失败: ${error.message}`, false);
+      }
+    });
+    
+    // 打开页面按钮
+    document.getElementById('openKeyManager').addEventListener('click', () => {
+      window.open('/api-server-ui.html', '_blank');
+    });
+    
+    document.getElementById('openVendorManager').addEventListener('click', () => {
+      window.open('/api-manager-ui.html', '_blank');
+    });
+    
+    document.getElementById('openTestPage').addEventListener('click', () => {
+      window.open('/test-api.html', '_blank');
+    });
+  </script>
+</body>
+</html>

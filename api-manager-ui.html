@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YYKJ AI 网关</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #334155;
+      --bg-hover: #475569;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-green: #22c55e;
+      --accent-green-hover: #16a34a;
+      --accent-blue: #3b82f6;
+      --accent-purple: #a855f7;
+      --accent-orange: #f97316;
+      --accent-pink: #ec4899;
+      --border-color: #475569;
+      --border-light: #334155;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(1400px, calc(100vw - 24px));
+      min-height: calc(100vh - 24px);
+      margin: 12px auto;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      background: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      padding: 20px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .search-box {
+      height: 44px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 14px;
+      transition: all 0.2s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 14px;
+      background: transparent;
+      color: var(--text-primary);
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .vendor-list {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+      padding-bottom: 0;
+    }
+
+    .vendor-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .vendor-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .vendor-list::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .vendor-item {
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: grid;
+      grid-template-columns: 36px 1fr auto auto;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .vendor-item:hover {
+      background: var(--bg-hover);
+    }
+
+    .vendor-item.active {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .vendor-delete-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.2s ease;
+    }
+
+    .vendor-item:hover .vendor-delete-btn {
+      opacity: 1;
+    }
+
+    .vendor-delete-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .vendor-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    }
+
+    .vendor-item:nth-child(2n) .vendor-icon { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
+    .vendor-item:nth-child(3n) .vendor-icon { background: linear-gradient(135deg, #a855f7, #9333ea); box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3); }
+    .vendor-item:nth-child(4n) .vendor-icon { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
+    .vendor-item:nth-child(5n) .vendor-icon { background: linear-gradient(135deg, #ec4899, #db2777); box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3); }
+
+    .vendor-name {
+      font-size: 15px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--text-primary);
+    }
+
+    .vendor-item.active > .vendor-name {
+      color: #fff;
+    }
+
+    .toggle-mini {
+      width: 48px;
+      height: 26px;
+      border-radius: 13px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-mini::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      top: 2px;
+      left: 2px;
+      transition: all 0.2s ease;
+      z-index: 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .toggle-mini.off {
+      background: var(--bg-secondary);
+    }
+
+    .toggle-mini:not(.off) {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: var(--accent-green);
+    }
+
+    .toggle-mini:not(.off)::after {
+      background: var(--accent-green);
+      left: 24px;
+    }
+
+    .sidebar-add {
+      border: 1px dashed var(--border-color);
+      background: transparent;
+      height: 44px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-add:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .provider-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .provider-modal.show {
+      display: flex;
+    }
+
+    .provider-modal-content {
+      width: min(460px, 100%);
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .provider-modal h3 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .provider-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      display: grid;
+      place-items: center;
+      font-size: 36px;
+      margin: 0 auto;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .provider-type-select {
+      width: 100%;
+      height: 44px;
+      padding: 0 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-secondary);
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .provider-type-btn {
+      height: 44px;
+      min-width: 100px;
+      padding: 0 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 22px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .provider-type-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--text-primary);
+    }
+
+    .provider-type-btn.selected {
+      border-color: var(--accent-green);
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+    }
+
+    .content {
+      padding: 20px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .content::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 3px;
+    }
+
+    .header-row,
+    .section-title,
+    .bottom-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .header-row {
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .switch {
+      width: 54px;
+      height: 32px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .switch::after {
+      content: "";
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .switch.on {
+      background: rgba(34, 197, 94, 0.2);
+      border-color: var(--accent-green);
+    }
+
+    .switch.on::after {
+      background: var(--accent-green);
+      left: 25px;
+    }
+
+    .block {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title .left,
+    .section-title .right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-count {
+      background: var(--bg-card);
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .input-wrap {
+      height: 48px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      padding: 0 0 0 14px;
+      overflow: hidden;
+      background: var(--bg-card);
+      transition: all 0.2s ease;
+    }
+
+    .input-wrap:focus-within {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .input-wrap.active-address {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+    }
+
+    .input-wrap input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 15px;
+      background: transparent;
+      color: var(--text-primary);
+      min-width: 0;
+    }
+
+    .input-wrap input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .append-btn {
+      border: none;
+      border-left: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      height: 100%;
+      padding: 0 18px;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .append-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .append-btn.compact {
+      padding: 0 12px;
+      min-width: 58px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .hint {
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .endpoint-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .endpoint-preview-meta {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    .endpoint-preview-value {
+      color: rgba(34, 197, 94, 0.6);
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .model-search-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .model-search {
+      width: 200px;
+      height: 38px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0 14px;
+      font-size: 14px;
+      outline: none;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .model-search:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .model-search::placeholder {
+      color: var(--text-muted);
+    }
+
+    .groups {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 280px;
+    }
+
+    .groups.collapsed {
+      display: none;
+    }
+
+    .collapse-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      line-height: 1;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+    }
+
+    .collapse-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .group-card {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .group-head {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .group-head:hover {
+      background: var(--bg-hover);
+    }
+
+    .group-head-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .group-body {
+      padding: 6px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .group-card.collapsed .group-body {
+      display: none;
+    }
+
+    .model-row {
+      min-height: 52px;
+      display: grid;
+      grid-template-columns: 32px 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 6px 16px;
+      transition: all 0.2s ease;
+    }
+
+    .model-row:hover {
+      background: var(--bg-hover);
+    }
+
+    .model-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+    }
+
+    .model-row:nth-child(2n) .model-avatar { background: linear-gradient(135deg, var(--accent-blue), #06b6d4); box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3); }
+    .model-row:nth-child(3n) .model-avatar { background: linear-gradient(135deg, var(--accent-orange), #ef4444); box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3); }
+    .model-row:nth-child(4n) .model-avatar { background: linear-gradient(135deg, var(--accent-green), #10b981); box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3); }
+
+    .model-name {
+      font-size: 14px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--text-primary);
+    }
+
+    .tag {
+      height: 24px;
+      min-width: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 500;
+      gap: 4px;
+    }
+
+    .tag.vision { background: rgba(6, 182, 212, 0.2); color: #22d3ee; }
+    .tag.search { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+    .tag.tool { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .tiny-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .tiny-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .bottom-actions {
+      margin-top: auto;
+      padding-top: 0;
+      padding-bottom: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .left-actions,
+    .right-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-toggle {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .pill-btn {
+      height: 44px;
+      border-radius: var(--radius-md);
+      padding: 0 20px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s ease;
+    }
+
+    .pill-btn:hover {
+      border-color: var(--accent-blue);
+      color: var(--text-primary);
+    }
+
+    .pill-btn.primary {
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-green-hover));
+      color: #fff;
+      border-color: var(--accent-green);
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .pill-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .loading {
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      background: var(--bg-card);
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transform: translateY(12px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, 0.5);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .confirm-modal {
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
+
+    .confirm-modal h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+
+    .confirm-modal p {
+      color: var(--text-secondary);
+      margin: 0 0 20px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .modal-mask.show { display: flex; }
+
+    .modal {
+      width: min(460px, 100%);
+      background: var(--bg-card);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .modal h3 {
+      margin: 0;
+      font-size: 22px;
+      color: var(--text-primary);
+    }
+
+    .modal .field {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .modal label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .modal input,
+    .modal select {
+      height: 44px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0 14px;
+      font-size: 14px;
+      outline: none;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    .modal input:focus,
+    .modal select:focus {
+      border-color: var(--accent-blue);
+    }
+
+    .modal input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .empty {
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 14px;
+      background: var(--bg-card);
+    }
+
+    body.theme-light {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --text-primary: #1e293b;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+    }
+
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); }
+    }
+
+    @media (max-width: 768px) {
+      .app { width: calc(100vw - 16px); min-height: calc(100vh - 16px); margin: 8px; }
+      .content { padding: 16px; }
+      .title { font-size: 20px; }
+      .model-search { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="search-box">
+        <span>🔍</span>
+        <input id="vendorSearch" placeholder="搜索模型平台..." />
+        <span>⎚</span>
+      </div>
+      <div class="vendor-list" id="vendorList"></div>
+      <button type="button" class="sidebar-add" id="addVendorBtn">＋ 添加</button>
+    </aside>
+
+    <main class="content">
+      <div class="header-row">
+        <div class="title" id="vendorTitle">YYKJ AI 网关</div>
+        <div class="header-actions">
+          <button type="button" class="pill-btn" id="gatewayServerBtn">🖥 Api网关服务器</button>
+          <div class="switch on" id="vendorSwitch"></div>
+        </div>
+      </div>
+
+      <section class="block">
+        <div class="section-title">
+          <div class="left">API 密钥</div>
+          <div class="right"></div>
+        </div>
+        <div class="input-wrap">
+          <input id="apiKeyInput" type="password" placeholder="请输入 API Key，多个密钥可用逗号分隔" />
+          <button type="button" class="append-btn compact" id="toggleApiKeyBtn">显示</button>
+        </div>
+        <div class="hint">多个密钥使用逗号分隔</div>
+      </section>
+
+      <section class="block">
+        <div class="section-title">
+        <div class="left">统一转发地址 <span style="color:#9ca3af;font-size:13px;">ⓘ</span></div>
+          <div class="right"></div>
+        </div>
+        <div class="input-wrap active-address">
+          <input id="apiUrlInput" placeholder="请输入统一转发地址" />
+        </div>
+        <div class="endpoint-preview">
+          <div class="endpoint-preview-meta" id="modelRoutePreviewType">当前协议类型：OpenAI</div>
+          <div class="endpoint-preview-value" id="modelRoutePreview">https://api.openai.com/v1/chat/completions</div>
+        </div>
+        <div class="hint">用于统一转发汇总的第三方模型 API，支持 OpenAI 协议接入</div>
+      </section>
+
+      <section class="block">
+        <div class="section-title">
+          <div class="left">
+            <button type="button" class="collapse-btn" id="toggleModelsBtn" title="折叠模型">⌄</button>
+            模型
+            <span class="badge-count" id="modelCount">0</span>
+            <input id="modelSearch" class="model-search" placeholder="搜索模型" />
+          </div>
+          <div class="right">
+          </div>
+        </div>
+        <div class="groups" id="modelGroups"></div>
+      </section>
+
+      <div class="bottom-actions">
+        <div class="left-actions">
+          <button type="button" class="pill-btn primary" id="manageBtn">📥 从供应商添加模型</button>
+        </div>
+        <div class="right-actions">
+          <button type="button" class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-mask" id="editModelModalMask" style="display: none;">
+    <div class="modal provider-modal-content">
+      <h3>编辑模型</h3>
+      <div class="field">
+        <label for="editModelIdInput">模型 ID</label>
+        <input id="editModelIdInput" placeholder="例如：gpt-5.4" />
+      </div>
+      <div class="field">
+        <label for="editModelNameInput">模型名称</label>
+        <input id="editModelNameInput" placeholder="例如：gpt-5.4" />
+      </div>
+      <div class="field">
+        <label for="editGroupNameInput">分组名称</label>
+        <input id="editGroupNameInput" placeholder="例如：gpt-5.4" />
+      </div>
+      <div class="field">
+        <label for="editAbilitySelect">能力标签</label>
+        <select id="editAbilitySelect" multiple size="3">
+          <option value="vision">视觉</option>
+          <option value="search">搜索</option>
+          <option value="tool">工具</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="pill-btn" id="cancelEditModelBtn">取消</button>
+        <button type="button" class="pill-btn primary" id="saveEditModelBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal-mask" id="confirmModal">
+    <div class="confirm-modal">
+      <h3>确认删除</h3>
+      <p>确定要删除这个供应商吗？</p>
+      <div class="confirm-actions">
+        <button type="button" class="pill-btn" id="cancelConfirmBtn">取消</button>
+        <button type="button" class="pill-btn primary" id="confirmDeleteBtn" style="background:#ef4444;border-color:#ef4444;">删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加提供商弹窗 -->
+  <div class="provider-modal" id="providerModal">
+    <div class="modal">
+      <h3 id="providerModalTitle">添加提供商</h3>
+      <div class="provider-avatar">P</div>
+      <div class="field">
+        <label for="providerNameInput">提供商名称</label>
+        <input id="providerNameInput" placeholder="例如 YYKJ 网关" />
+      </div>
+      <div class="field">
+        <label>提供商类型</label>
+        <select id="providerTypeSelect" class="provider-type-select">
+          <option value="OpenAI" selected>OpenAI</option>
+          <option value="OpenAI-Response">OpenAI-Response</option>
+          <option value="Gemini">Gemini</option>
+          <option value="Anthropic">Anthropic</option>
+          <option value="Azure OpenAI">Azure OpenAI</option>
+          <option value="New API">New API</option>
+          <option value="CherryIN">CherryIN</option>
+          <option value="Ollama">Ollama</option>
+        </select>
+        <div class="provider-type-note">选择类型后会为新供应商预填统一转发地址，主界面会显示模型转发地址预览。</div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="pill-btn" id="cancelProviderBtn">取消</button>
+        <button type="button" class="pill-btn primary" id="confirmProviderBtn">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 登录验证 ==========
+    function getStoredAuthToken() {
+      return localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || '';
+    }
+
+    function clearStoredAuthToken() {
+      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('authToken');
+    }
+
+    async function checkAuth() {
+      const token = getStoredAuthToken();
+      
+      try {
+        const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+        const response = await fetch('/api/session', { headers });
+        const data = await response.json();
+        if (!data.valid) {
+          clearStoredAuthToken();
+          window.location.href = '/login.html';
+          return false;
+        }
+        return true;
+      } catch (error) {
+        clearStoredAuthToken();
+        window.location.href = '/login.html';
+        return false;
+      }
+    }
+
+    function getAuthHeaders() {
+      const token = getStoredAuthToken();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      return headers;
+    }
+
+    async function authFetch(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+          ...getAuthHeaders()
+        }
+      });
+      return response;
+    }
+
+    // 运营商数据将从后端加载，不再硬编码
+
+    const state = {
+      search: '',
+      modelSearch: '',
+      selectedVendorId: '',
+      apiBase: 'http://localhost:3001/api',
+      loadingModels: false,
+      savingModel: false,
+      editingModel: false,
+      editingModelIndex: -1,
+      lastLoadedVendorId: '',
+      apiKeyVisible: false,
+      modelsCollapsed: false,
+      vendors: []
+    };
+
+    const STORAGE_KEYS = {
+      selectedVendorId: 'ai-gateway-selected-vendor-id'
+    };
+
+    // 从后端加载运营商列表
+    async function loadVendorsFromBackend() {
+      try {
+        const response = await authFetch(`${state.apiBase}/vendors`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (data.vendors && data.vendors.length > 0) {
+          const rememberedVendorId = String(state.selectedVendorId || getRememberedSelectedVendorId() || '');
+          state.vendors = data.vendors.map(v => ({ ...v, id: String(v.id), models: v.models || [] }));
+          const selectedVendor = state.vendors.find(v => v.id === rememberedVendorId) || state.vendors[0];
+          state.selectedVendorId = String(selectedVendor.id);
+          setRememberedSelectedVendorId(state.selectedVendorId);
+          return true;
+        }
+      } catch (error) {
+        console.error('从后端加载运营商失败:', error);
+      }
+
+      state.vendors = [{
+        id: 'public-api',
+        name: 'YYKJ Gateway',
+        icon: 'Y',
+        enabled: true,
+        apiKey: '',
+        apiUrl: '',
+        providerType: 'OpenAI',
+        models: []
+      }];
+      state.selectedVendorId = 'public-api';
+      setRememberedSelectedVendorId(state.selectedVendorId);
+      return true;
+    }
+
+    const vendorList = document.getElementById('vendorList');
+    const vendorTitle = document.getElementById('vendorTitle');
+    const vendorSwitch = document.getElementById('vendorSwitch');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const toggleApiKeyBtn = document.getElementById('toggleApiKeyBtn');
+    const apiUrlInput = document.getElementById('apiUrlInput');
+    const modelRoutePreview = document.getElementById('modelRoutePreview');
+    const modelRoutePreviewType = document.getElementById('modelRoutePreviewType');
+    const modelGroups = document.getElementById('modelGroups');
+    const modelCount = document.getElementById('modelCount');
+    const vendorSearch = document.getElementById('vendorSearch');
+    const modelSearch = document.getElementById('modelSearch');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const toggleModelsBtn = document.getElementById('toggleModelsBtn');
+    const manageBtn = document.getElementById('manageBtn');
+    const gatewayServerBtn = document.getElementById('gatewayServerBtn');
+    const themeToggle = document.getElementById('themeToggle');
+    const toast = document.getElementById('toast');
+    const editModelModalMask = document.getElementById('editModelModalMask');
+    const editModelIdInput = document.getElementById('editModelIdInput');
+    const editModelNameInput = document.getElementById('editModelNameInput');
+    const editGroupNameInput = document.getElementById('editGroupNameInput');
+    const editAbilitySelect = document.getElementById('editAbilitySelect');
+    const saveEditModelBtn = document.getElementById('saveEditModelBtn');
+    const providerModal = document.getElementById('providerModal');
+    const providerModalTitle = document.getElementById('providerModalTitle');
+    const providerNameInput = document.getElementById('providerNameInput');
+    const cancelProviderBtn = document.getElementById('cancelProviderBtn');
+    const confirmProviderBtn = document.getElementById('confirmProviderBtn');
+    const addVendorBtn = document.getElementById('addVendorBtn');
+    const confirmModal = document.getElementById('confirmModal');
+    const cancelConfirmBtn = document.getElementById('cancelConfirmBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const providerTypeSelect = document.getElementById('providerTypeSelect');
+
+    let pendingDeleteId = null;
+    let editingVendorId = null;
+
+    const PROVIDER_TYPE_CONFIG = {
+      'OpenAI-Response': {
+        defaultBaseUrl: 'https://opencode.ai/zen',
+        previewPath: '/responses'
+      },
+      OpenAI: {
+        defaultBaseUrl: 'https://api.openai.com',
+        previewPath: '/chat/completions'
+      },
+      Gemini: {
+        defaultBaseUrl: 'https://generativelanguage.googleapis.com',
+        previewPath: '/chat/completions'
+      },
+      Anthropic: {
+        defaultBaseUrl: 'https://api.anthropic.com',
+        previewPath: '/messages'
+      },
+      'Azure OpenAI': {
+        defaultBaseUrl: 'https://YOUR-RESOURCE.openai.azure.com',
+        previewPath: '/chat/completions'
+      },
+      'New API': {
+        defaultBaseUrl: 'https://your-newapi.example.com',
+        previewPath: '/chat/completions'
+      },
+      Ollama: {
+        defaultBaseUrl: 'http://localhost:6011',
+        previewPath: '/chat/completions'
+      }
+    };
+
+    function getRememberedSelectedVendorId() {
+      return localStorage.getItem(STORAGE_KEYS.selectedVendorId) || '';
+    }
+
+    function setRememberedSelectedVendorId(vendorId = '') {
+      if (vendorId) {
+        localStorage.setItem(STORAGE_KEYS.selectedVendorId, String(vendorId));
+        return;
+      }
+      localStorage.removeItem(STORAGE_KEYS.selectedVendorId);
+    }
+
+    function getVendor() {
+      return state.vendors.find(v => String(v.id) === String(state.selectedVendorId)) || state.vendors[0];
+    }
+
+    function getProviderTypeConfig(providerType = 'OpenAI') {
+      return PROVIDER_TYPE_CONFIG[providerType] || PROVIDER_TYPE_CONFIG.OpenAI;
+    }
+
+    function getVendorProviderType(vendor = getVendor()) {
+      return vendor?.providerType || 'OpenAI';
+    }
+
+    function setSelectedProviderType(providerType = 'OpenAI') {
+      if (providerTypeSelect) {
+        providerTypeSelect.value = providerType;
+      }
+    }
+
+    function getSelectedProviderType() {
+      return providerTypeSelect?.value || 'OpenAI';
+    }
+
+    function getSelectedAbilities(select) {
+      return Array.from(select.selectedOptions).map(option => option.value);
+    }
+
+    function setSelectedAbilities(select, abilities = []) {
+      const selectedAbilities = new Set((abilities || []).map(value => String(value)));
+      Array.from(select.options).forEach(option => {
+        option.selected = selectedAbilities.has(option.value);
+      });
+    }
+
+    function buildApiUrl(path) {
+      const safeBase = state.apiBase.replace(/\/+$/, '');
+      const safePath = path.startsWith('/') ? path : `/${path}`;
+      return `${safeBase}${safePath}`;
+    }
+
+    function normalizeGroupName(modelName, fallbackGroup = 'default') {
+      const name = String(modelName || '').trim();
+      if (!name) return fallbackGroup;
+      const bySlash = name.split('/')[0]?.trim();
+      if (bySlash) return bySlash;
+      const byColon = name.split(':')[0]?.trim();
+      if (byColon) return byColon;
+      const byDash = name.split('-')[0]?.trim();
+      return byDash || fallbackGroup;
+    }
+
+    function getApiEndpoint(url, path) {
+      const safe = (url || '').replace(/\/+$/, '');
+      if (!safe) return '';
+      if (safe.endsWith(path)) return safe;
+      if (/\/v\d+$/i.test(safe)) return `${safe}${path}`;
+      return `${safe}/v1${path}`;
+    }
+
+    function getPreview(url, providerType = 'OpenAI') {
+      const config = getProviderTypeConfig(providerType);
+      const safeUrl = String(url || '').trim();
+      if (!safeUrl) {
+        return `例如：${getApiEndpoint(config.defaultBaseUrl, config.previewPath)}`;
+      }
+      return getApiEndpoint(safeUrl, config.previewPath);
+    }
+
+    function renderModelRoutePreview(vendor = getVendor()) {
+      const providerType = getVendorProviderType(vendor);
+      if (modelRoutePreviewType) {
+        modelRoutePreviewType.textContent = `当前协议类型：${providerType}`;
+      }
+      if (modelRoutePreview) {
+        modelRoutePreview.textContent = getPreview(vendor?.apiUrl || '', providerType);
+      }
+    }
+
+    function buildGroupedModels(models) {
+      const groups = {};
+      models.forEach(model => {
+        const group = normalizeGroupName(model.name, model.group || 'default');
+        if (!groups[group]) groups[group] = [];
+        groups[group].push({
+          group,
+          name: model.name,
+          tags: Array.isArray(model.tags) && model.tags.length ? model.tags : ['tool']
+        });
+      });
+      return groups;
+    }
+
+    function normalizeBackendModels(data) {
+      const models = Array.isArray(data) ? data : Array.isArray(data?.models) ? data.models : [];
+      return models
+        .filter(item => item?.name)
+        .map(item => ({
+          group: normalizeGroupName(item.name, item.group || 'default'),
+          name: String(item.name),
+          tags: Array.isArray(item.tags) && item.tags.length ? item.tags.map(tag => String(tag)) : ['tool']
+        }));
+    }
+
+    function getVendorBackendPath(vendorId = state.selectedVendorId) {
+      return vendorId;
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    function getVendorConnectionPayload(vendor = getVendor()) {
+      return {
+        apiKey: String(vendor?.apiKey || ''),
+        apiUrl: String(vendor?.apiUrl || '')
+      };
+    }
+
+    async function saveVendorConnection(vendor = getVendor()) {
+      if (!vendor?.id) return getVendorConnectionPayload(vendor);
+      const payload = getVendorConnectionPayload(vendor);
+      await authFetch(buildApiUrl(`/vendors/${vendor.id}`), {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      Object.assign(vendor, payload);
+      return payload;
+    }
+
+    async function loadVendorModels(vendorId = state.selectedVendorId, source = 'auto') {
+      const requestVendorId = String(vendorId);
+      const vendor = state.vendors.find(item => String(item.id) === requestVendorId);
+      if (!vendor) return;
+      state.loadingModels = true;
+      renderModels();
+      if (refreshBtn) refreshBtn.disabled = true;
+      manageBtn.disabled = true;
+
+      try {
+        const response = await authFetch(buildApiUrl(`/vendors/${requestVendorId}/models`));
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        vendor.models = normalizeBackendModels(data.models || []);
+        state.lastLoadedVendorId = requestVendorId;
+        if (source === 'init') showToast(`已加载 ${vendor.models.length} 个模型`);
+        else if (source === 'manual') showToast(`已加载 ${vendor.models.length} 个模型`);
+      } catch (error) {
+        console.error(error);
+        if (source === 'init' || source === 'manual') {
+          showToast('加载失败');
+        }
+      } finally {
+        state.loadingModels = false;
+        if (refreshBtn) refreshBtn.disabled = false;
+        manageBtn.disabled = false;
+        renderModels();
+      }
+    }
+
+    // ========== 模型选择弹窗 ==========
+    let modelSelectModal = null;
+    let availableModels = [];
+
+    function openModelSelectModal() {
+      const modalHtml = `
+        <div class="modal-mask" id="model-select-mask" style="display: flex;">
+          <div class="modal" style="width: min(900px, 95vw); max-height: 85vh; overflow: hidden; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; background: #fafafa;">
+              <h2 style="margin: 0; font-size: 18px; font-weight: 600;">公益Api中转站模型</h2>
+              <button type="button" id="close-model-select" style="border: none; background: none; cursor: pointer; font-size: 20px; color: #999;">&times;</button>
+            </div>
+            
+            <div style="padding: 16px 20px; border-bottom: 1px solid #eee;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="flex: 1; position: relative;">
+                  <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%);">🔍</span>
+                  <input type="text" id="model-search-input" placeholder="搜索模型 ID 或名称" style="width: 100%; padding: 10px 14px 10px 38px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none;">
+                </div>
+                <button type="button" style="width: 36px; height: 36px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 16px;">⟳</button>
+              </div>
+            </div>
+            
+            <div style="padding: 0 20px; border-bottom: 1px solid #eee;">
+              <div style="display: flex; gap: 16px; padding: 12px 0;">
+                ${['全部', '推理', '视觉', '联网', '免费', '嵌入', '重排', '工具'].map((tag, index) => `
+                  <button type="button" class="filter-tag-btn" data-tag="${tag}" style="${index === 0 ? 'color: #10b981; border-bottom: 2px solid #10b981;' : 'color: #666;'} font-size: 14px; font-weight: 500; background: none; border: none; padding: 4px 0; cursor: pointer;">${tag}</button>
+                `).join('')}
+              </div>
+            </div>
+            
+            <div id="model-select-list" style="overflow-y: auto; max-height: 55vh; padding: 8px 0;">
+              <div style="text-align: center; color: #999; padding: 40px;">加载中...</div>
+            </div>
+            
+            <div style="padding: 12px 20px; border-top: 1px solid #eee; background: #fafafa;">
+              <button type="button" class="pill-btn" id="cancel-model-select" style="background: #10b981; color: white; border: none;">关闭</button>
+            </div>
+          </div>
+        </div>
+      `;
+      if (document.getElementById('model-select-mask')) document.getElementById('model-select-mask').remove();
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      modelSelectModal = document.getElementById('model-select-mask');
+      document.getElementById('close-model-select').onclick = closeModelSelectModal;
+      document.getElementById('cancel-model-select').onclick = closeModelSelectModal;
+      document.getElementById('model-select-mask').addEventListener('click', (e) => { if (e.target.id === 'model-select-mask') closeModelSelectModal(); });
+      document.getElementById('model-search-input').addEventListener('input', filterModels);
+      
+      document.querySelectorAll('.filter-tag-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.filter-tag-btn').forEach(b => {
+            b.style.color = '#666';
+            b.style.borderBottom = 'none';
+          });
+          e.target.style.color = '#10b981';
+          e.target.style.borderBottom = '2px solid #10b981';
+          filterModels({ target: { value: document.getElementById('model-search-input').value } });
+        });
+      });
+      
+      loadAndShowAvailableModels();
+    }
+
+    function closeModelSelectModal() {
+      if (modelSelectModal) modelSelectModal.remove();
+      availableModels = [];
+    }
+
+    async function loadAndShowAvailableModels() {
+      console.log('[DEBUG] loadAndShowAvailableModels called');
+      const vendor = getVendor();
+      console.log('[DEBUG] vendor:', vendor);
+      if (!vendor) {
+        showToast('未找到运营商');
+        return;
+      }
+      const apiKey = vendor.apiKey;
+      console.log('[DEBUG] apiKey exists:', !!apiKey);
+      if (!apiKey) {
+        showToast('请先设置API密钥');
+        return;
+      }
+      const listEl = document.getElementById('model-select-list');
+      console.log('[DEBUG] listEl:', listEl);
+      if (!listEl) {
+        console.error('[ERROR] model-select-list element not found');
+        return;
+      }
+      listEl.innerHTML = '<div style="text-align: center; color: var(--muted); padding: 40px;">正在获取模型列表...</div>';
+      try {
+        const connection = await saveVendorConnection(vendor);
+        const url = buildApiUrl(`/vendors/${String(vendor.id)}/fetch-all-models`);
+        console.log('[DEBUG] fetching:', url);
+        const response = await authFetch(url, {
+          method: 'POST',
+          body: JSON.stringify(connection)
+        });
+        console.log('[DEBUG] response status:', response.status);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('[DEBUG] received models:', data);
+        availableModels = data.models || [];
+        renderAvailableModels();
+      } catch (error) {
+        console.error('[ERROR]', error);
+        listEl.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 40px;">获取模型失败：${error.message}</div>`;
+      }
+    }
+
+    function renderAvailableModels(filter = '') {
+      const vendor = getVendor();
+      const existingModelNames = vendor?.models?.map(m => m.name) || [];
+      let filtered = availableModels;
+      
+      if (filter.trim()) {
+        const filterLower = filter.toLowerCase();
+        filtered = availableModels.filter(m =>
+          m.name.toLowerCase().includes(filterLower) ||
+          m.group?.toLowerCase().includes(filterLower)
+        );
+      }
+      
+      const listEl = document.getElementById('model-select-list');
+      if (!filtered.length) {
+        listEl.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">没有找到匹配的模型</div>';
+        return;
+      }
+      
+      const groupedModels = {};
+      filtered.forEach(model => {
+        const group = model.group || 'default';
+        if (!groupedModels[group]) groupedModels[group] = [];
+        groupedModels[group].push(model);
+      });
+      
+      listEl.innerHTML = Object.entries(groupedModels).map(([group, models]) => {
+        const iconColors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'];
+        const colorIndex = Object.keys(groupedModels).indexOf(group) % iconColors.length;
+        const iconBg = iconColors[colorIndex];
+        
+        return `
+          <div style="border-bottom: 1px solid #eee;">
+            <div class="model-group-header" data-group="${group}" style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px 20px;
+              background: #f8f9fa;
+              cursor: pointer;
+            ">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="group-toggle-icon" style="font-size: 14px; color: #666;">▼</span>
+                <span style="font-weight: 600; font-size: 14px; color: #333;">${group}</span>
+                <span style="background: #e0e0e0; color: #666; font-size: 12px; padding: 2px 8px; border-radius: 999px;">${models.length}</span>
+              </div>
+              <button class="add-group-btn" data-group="${group}" style="
+                width: 28px;
+                height: 28px;
+                border: 1px solid #ddd;
+                border-radius: 6px;
+                background: white;
+                cursor: pointer;
+                font-size: 18px;
+                color: #666;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              ">+</button>
+            </div>
+            <div class="model-group-body" style="display: block;">
+              ${models.map(model => {
+                const exists = existingModelNames.includes(model.name);
+                return `
+                  <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px 20px;
+                    background: white;
+                  ">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                      <div style="
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 8px;
+                        background: ${iconBg};
+                        color: white;
+                        display: grid;
+                        place-items: center;
+                        font-size: 16px;
+                        font-weight: 700;
+                      ">${model.name[0].toUpperCase()}</div>
+                      <div>
+                        <div style="font-size: 14px; color: #333; font-weight: 500;">${model.name}</div>
+                      </div>
+                    </div>
+                    ${exists ? `
+                      <span style="color: #10b981; font-size: 13px; font-weight: 500;">已添加</span>
+                    ` : `
+                      <button class="add-single-model" data-model="${encodeURIComponent(JSON.stringify(model))}" style="
+                        width: 28px;
+                        height: 28px;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        background: white;
+                        cursor: pointer;
+                        font-size: 18px;
+                        color: #666;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        transition: all 0.15s;
+                      ">+</button>
+                    `}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      listEl.querySelectorAll('.model-group-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+          if (e.target.classList.contains('add-group-btn')) return;
+          const body = header.nextElementSibling;
+          const toggleIcon = header.querySelector('.group-toggle-icon');
+          if (body.style.display === 'none') {
+            body.style.display = 'block';
+            toggleIcon.textContent = '▼';
+          } else {
+            body.style.display = 'none';
+            toggleIcon.textContent = '▶';
+          }
+        });
+      });
+      
+      listEl.querySelectorAll('.add-single-model').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const modelData = JSON.parse(decodeURIComponent(btn.dataset.model));
+          await addSingleModel(modelData, btn);
+        });
+        btn.addEventListener('mouseenter', () => {
+          btn.style.borderColor = '#10b981';
+          btn.style.color = '#10b981';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.borderColor = '#ddd';
+          btn.style.color = '#666';
+        });
+      });
+      
+      listEl.querySelectorAll('.add-group-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const groupName = btn.dataset.group;
+          const groupModels = groupedModels[groupName];
+          const vendor = getVendor();
+          if (!vendor) return;
+          
+          const newModels = groupModels.filter(m => !existingModelNames.includes(m.name));
+          if (newModels.length === 0) {
+            showToast('该分组所有模型已添加');
+            return;
+          }
+          
+          btn.textContent = '⏳';
+          btn.disabled = true;
+          
+          try {
+            const response = await authFetch(buildApiUrl(`/vendors/${String(vendor.id)}/models/batch`), {
+              method: 'POST',
+              body: JSON.stringify({ models: newModels })
+            });
+            
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || '添加失败');
+            }
+            
+            newModels.forEach(m => {
+              if (!vendor.models) vendor.models = [];
+              vendor.models.push(m);
+            });
+            
+            btn.textContent = '✓';
+            btn.style.backgroundColor = '#10b981';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = 'white';
+            
+            showToast(`已添加 ${newModels.length} 个模型`);
+            renderModels();
+            
+            setTimeout(() => {
+              btn.textContent = '+';
+              btn.style.backgroundColor = 'white';
+              btn.style.borderColor = '#ddd';
+              btn.style.color = '#666';
+              btn.disabled = false;
+            }, 2000);
+            
+          } catch (error) {
+            btn.textContent = '+';
+            btn.disabled = false;
+            showToast(`添加失败：${error.message}`);
+          }
+        });
+        
+        btn.addEventListener('mouseenter', () => {
+          btn.style.borderColor = '#10b981';
+          btn.style.color = '#10b981';
+        });
+        btn.addEventListener('mouseleave', () => {
+          btn.style.borderColor = '#ddd';
+          btn.style.color = '#666';
+        });
+      });
+    }
+
+    async function addSingleModel(model, button) {
+      const vendor = getVendor();
+      if (!vendor) return;
+
+      try {
+        button.textContent = '⏳';
+        button.disabled = true;
+
+        const response = await authFetch(buildApiUrl(`/vendors/${String(vendor.id)}/models/batch`), {
+          method: 'POST',
+          body: JSON.stringify({ models: [model] })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || `HTTP ${response.status}`);
+        }
+
+        const existingNames = (vendor.models || []).map(m => m.name);
+        if (!existingNames.includes(model.name)) {
+          vendor.models = vendor.models || [];
+          vendor.models.push(model);
+        }
+
+        renderModels();
+
+        // 自动测试模型是否可用
+        let testOk = false;
+        try {
+          const connection = await saveVendorConnection(vendor);
+          const testRes = await authFetch(buildApiUrl(`/vendors/${String(vendor.id)}/test-model`), {
+            method: 'POST',
+            body: JSON.stringify({ model: model.name, ...connection })
+          });
+          testOk = testRes.ok;
+        } catch (_) {}
+
+        if (testOk) {
+          button.textContent = '✓';
+          button.style.backgroundColor = 'var(--accent-green)';
+          button.style.color = 'white';
+          button.disabled = true;
+          showToast(`模型 "${model.name}" 已添加并测试通过`);
+        } else {
+          button.textContent = '✗';
+          button.style.backgroundColor = '#ef4444';
+          button.style.color = 'white';
+          button.disabled = true;
+          showToast(`模型 "${model.name}" 已添加但测试失败，请检查配置`);
+        }
+
+        setTimeout(() => {
+          renderAvailableModels(document.getElementById('model-search-input').value);
+        }, 500);
+
+      } catch (error) {
+        button.textContent = '+';
+        button.disabled = false;
+        showToast(`添加失败：${error.message}`);
+      }
+    }
+
+    function filterModels(e) {
+      renderAvailableModels(e.target.value);
+    }
+
+    // ========== 点击管理按钮：打开模型选择器 ==========
+    async function fetchModelsFromAPI(vendorId = state.selectedVendorId) {
+      const vendor = state.vendors.find(v => String(v.id) === String(vendorId));
+      if (!vendor) {
+        showToast('未找到供应商');
+        return;
+      }
+      if (!vendor.apiKey?.trim()) {
+        showToast('请先设置 API 密钥');
+        return;
+      }
+      if (!vendor.apiUrl?.trim()) {
+        showToast('请先设置 API 地址');
+        return;
+      }
+      openModelSelectModal();
+    }
+    async function updateCustomModel(index, payload) {
+      const backendPath = getVendorBackendPath(state.selectedVendorId);
+      const response = await authFetch(buildApiUrl(`/vendors/${backendPath}/models/${index}`), {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json().catch(() => ({}));
+    }
+
+    function renderVendorList() {
+      const filtered = state.vendors.filter(v => v.name.toLowerCase().includes(state.search.toLowerCase()));
+      vendorList.innerHTML = filtered.map(v => `
+        <div class="vendor-item ${v.id === state.selectedVendorId ? 'active' : ''}" data-id="${v.id}">
+          <div class="vendor-icon">${v.icon}</div>
+          <div class="vendor-name">${v.name}</div>
+          <button class="toggle-mini ${v.enabled ? '' : 'off'}" data-toggle="${v.id}"></button>
+          <button class="vendor-delete-btn" data-delete="${v.id}" title="删除">✕</button>
+        </div>
+      `).join('');
+
+      vendorList.querySelectorAll('.vendor-item').forEach(item => {
+        item.addEventListener('click', e => {
+          if (e.target.closest('[data-toggle]') || e.target.closest('[data-delete]')) return;
+          const newVendorId = String(item.dataset.id);
+          if (newVendorId !== String(state.selectedVendorId)) {
+            state.selectedVendorId = newVendorId;
+            setRememberedSelectedVendorId(newVendorId);
+            loadVendorModels(newVendorId, 'init');
+          }
+          renderVendorList();
+          renderHeader();
+          renderModels();
+        });
+        
+        item.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          const vendorId = String(item.dataset.id);
+          const vendor = state.vendors.find(v => v.id === vendorId);
+          if (!vendor) return;
+          
+          const menuContainer = document.createElement('div');
+          menuContainer.id = 'vendor-context-menu';
+          menuContainer.style.cssText = `
+            position: fixed;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            padding: 4px;
+            z-index: 99999;
+            min-width: 120px;
+            display: block;
+          `;
+          
+          const menuBtn = document.createElement('button');
+          menuBtn.textContent = '修改名称';
+          menuBtn.style.cssText = `
+            width: 100%;
+            padding: 8px 12px;
+            text-align: left;
+            border: none;
+            background: none;
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text-primary);
+          `;
+          
+          menuBtn.addEventListener('click', () => {
+            openProviderModal(vendor);
+            menuContainer.remove();
+          });
+          
+          menuBtn.addEventListener('mouseenter', () => menuBtn.style.background = 'var(--bg-hover)');
+          menuBtn.addEventListener('mouseleave', () => menuBtn.style.background = 'none');
+          
+          menuContainer.appendChild(menuBtn);
+          
+          let left = e.clientX;
+          let top = e.clientY;
+          if (left + 150 > window.innerWidth) left = window.innerWidth - 150;
+          if (top + 80 > window.innerHeight) top = window.innerHeight - 80;
+          
+          menuContainer.style.left = `${left}px`;
+          menuContainer.style.top = `${top}px`;
+          
+          document.body.appendChild(menuContainer);
+          
+          const closeMenu = (e2) => {
+            if (!menuContainer.contains(e2.target)) {
+              menuContainer.remove();
+              document.removeEventListener('click', closeMenu);
+              document.removeEventListener('contextmenu', closeMenu);
+            }
+          };
+          setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+            document.addEventListener('contextmenu', closeMenu);
+          }, 0);
+        });
+      });
+
+      vendorList.querySelectorAll('[data-toggle]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const vendor = state.vendors.find(v => v.id === btn.dataset.toggle);
+          if (vendor) {
+            vendor.enabled = !vendor.enabled;
+            authFetch(buildApiUrl(`/vendors/${vendor.id}`), {
+              method: 'PUT',
+              body: JSON.stringify({ enabled: vendor.enabled })
+            }).catch(err => console.error('更新状态失败:', err));
+            renderVendorList();
+            renderHeader();
+            renderModels();
+          }
+        });
+      });
+
+      vendorList.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          pendingDeleteId = String(btn.dataset.delete);
+          confirmModal.classList.add('show');
+        });
+      });
+    }
+
+    function renderHeader() {
+      const vendor = getVendor();
+      if (!vendor) return;
+      vendorTitle.textContent = vendor.name;
+      vendorSwitch.classList.toggle('on', vendor.enabled);
+      vendorSwitch.onclick = async () => {
+        vendor.enabled = !vendor.enabled;
+        vendorSwitch.classList.toggle('on', vendor.enabled);
+        try {
+          await authFetch(buildApiUrl(`/vendors/${vendor.id}`), {
+            method: 'PUT',
+            body: JSON.stringify({ enabled: vendor.enabled })
+          });
+        } catch (error) {
+          console.error('保存启用状态失败:', error);
+        }
+        render();
+      };
+      apiKeyInput.type = state.apiKeyVisible ? 'text' : 'password';
+      apiKeyInput.value = vendor.apiKey || '';
+      toggleApiKeyBtn.textContent = state.apiKeyVisible ? '隐藏' : '显示';
+      apiUrlInput.value = vendor.apiUrl || '';
+      renderModelRoutePreview(vendor);
+    }
+
+    function renderModels() {
+      const vendor = getVendor();
+      if (!vendor) return;
+
+      modelGroups.classList.toggle('collapsed', state.modelsCollapsed);
+      toggleModelsBtn.textContent = state.modelsCollapsed ? '▸' : '⌄';
+      toggleModelsBtn.title = state.modelsCollapsed ? '展开模型' : '折叠模型';
+
+      if (state.loadingModels) {
+        modelCount.textContent = '...';
+        modelGroups.innerHTML = '<div class="loading">正在从后端加载模型...</div>';
+        return;
+      }
+
+      const keyword = state.modelSearch.trim().toLowerCase();
+      const visibleModels = (vendor.models || []).filter(model => {
+        const text = `${model.group} ${model.name} ${(model.tags || []).join(' ')}`.toLowerCase();
+        return !keyword || text.includes(keyword);
+      });
+      modelCount.textContent = visibleModels.length;
+
+      const groups = buildGroupedModels(visibleModels);
+      const groupEntries = Object.entries(groups);
+      if (!groupEntries.length) {
+        modelGroups.innerHTML = '<div class="empty">当前没有匹配的模型，你可以手动添加。</div>';
+        return;
+      }
+
+      modelGroups.innerHTML = groupEntries.map(([group, items]) => `
+        <div class="group-card">
+          <div class="group-head" data-group-head="${group}">
+            <div class="group-head-left">
+              <span class="group-toggle">⌄</span>
+              <span>${group}</span>
+            </div>
+            <div style="color:#9aa3b3;font-size:13px;">${items.length}</div>
+          </div>
+          <div class="group-body">
+            ${items.map((model) => {
+              const realIndex = vendor.models.findIndex(item => item.name === model.name && item.group === model.group);
+              return `
+                <div class="model-row" data-model-index="${realIndex}">
+                  <div class="model-avatar">${model.name.slice(0,1).toUpperCase()}</div>
+                  <div class="model-name">
+                    ${model.name}
+                    ${(model.tags || []).map(tag => `<span class="tag ${tag}">${tag === 'vision' ? '👁' : tag === 'search' ? '🌐' : '🛠'}</span>`).join('')}
+                  </div>
+                  <div class="row-actions"><button class="tiny-btn" data-edit="${realIndex}" title="编辑模型">✎</button><button class="tiny-btn" data-test="${realIndex}" title="测试模型">⚙</button></div>
+                  <div class="row-actions"><button class="tiny-btn" data-remove="${realIndex}" title="删除">－</button></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      modelGroups.querySelectorAll('[data-group-head]').forEach(head => {
+        head.addEventListener('click', () => {
+          head.parentElement.classList.toggle('collapsed');
+          const toggle = head.querySelector('.group-toggle');
+          toggle.textContent = head.parentElement.classList.contains('collapsed') ? '▸' : '⌄';
+        });
+      });
+
+      modelGroups.querySelectorAll('[data-edit]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          openEditModelModal(Number(btn.dataset.edit));
+        });
+      });
+
+      modelGroups.querySelectorAll('[data-test]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const index = Number(btn.dataset.test);
+          const model = vendor.models[index];
+          if (!model) return;
+          
+          if (!vendor.apiKey || !vendor.apiUrl) {
+            showToast('请先配置供应商的 API 密钥和地址');
+            return;
+          }
+          
+          btn.textContent = '⏳';
+          btn.disabled = true;
+          
+          try {
+            const connection = await saveVendorConnection(vendor);
+            const response = await authFetch(buildApiUrl(`/vendors/${String(vendor.id)}/test-model`), {
+              method: 'POST',
+              body: JSON.stringify({
+                model: model.name,
+                ...connection
+              })
+            });
+            
+            if (response.ok) {
+              showToast(`模型 "${model.name}" 测试成功`);
+              btn.textContent = '✓';
+              setTimeout(() => { btn.textContent = '⚙'; }, 2000);
+            } else {
+              const error = await response.json().catch(() => ({ error: '未知错误' }));
+              console.error('Test model error:', error);
+              showToast(`测试失败: ${error.error || response.status}`);
+              btn.textContent = '⚙';
+            }
+          } catch (error) {
+            showToast(`测试失败: ${error.message}`);
+            btn.textContent = '⚙';
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
+
+
+
+      modelGroups.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const realIndex = Number(btn.dataset.remove);
+          const model = vendor.models[realIndex];
+          if (!model) return;
+          
+          try {
+            await authFetch(buildApiUrl(`/vendors/${String(vendor.id)}/models/${realIndex}`), {
+              method: 'DELETE'
+            });
+            vendor.models.splice(realIndex, 1);
+            renderModels();
+            showToast('模型已删除');
+          } catch (error) {
+            console.error(error);
+            showToast('删除失败');
+          }
+        });
+      });
+    }
+
+    function render() {
+      renderVendorList();
+      renderHeader();
+      renderModels();
+    }
+
+    vendorSearch.addEventListener('input', e => {
+      state.search = e.target.value;
+      renderVendorList();
+    });
+
+    modelSearch.addEventListener('input', e => {
+      state.modelSearch = e.target.value;
+      renderModels();
+    });
+
+    apiKeyInput.addEventListener('input', e => {
+      getVendor().apiKey = e.target.value;
+      apiKeyInput.type = state.apiKeyVisible ? 'text' : 'password';
+    });
+
+    toggleApiKeyBtn.addEventListener('click', () => {
+      state.apiKeyVisible = !state.apiKeyVisible;
+      apiKeyInput.type = state.apiKeyVisible ? 'text' : 'password';
+      toggleApiKeyBtn.textContent = state.apiKeyVisible ? '隐藏' : '显示';
+      renderHeader();
+    });
+
+    toggleModelsBtn.addEventListener('click', () => {
+      state.modelsCollapsed = !state.modelsCollapsed;
+      renderModels();
+    });
+
+    apiUrlInput.addEventListener('input', e => {
+      getVendor().apiUrl = e.target.value;
+      renderModelRoutePreview();
+    });
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        loadVendorModels(state.selectedVendorId, 'manual');
+      });
+    }
+
+    manageBtn.addEventListener('click', () => {
+      fetchModelsFromAPI(state.selectedVendorId);
+    });
+
+    gatewayServerBtn.addEventListener('click', () => {
+      window.location.href = '/api-server-ui.html';
+    });
+
+    function openProviderModal(vendor = null) {
+      editingVendorId = vendor ? String(vendor.id) : null;
+      providerModalTitle.textContent = vendor ? '编辑提供商' : '添加提供商';
+      providerNameInput.value = vendor ? vendor.name : '';
+      setSelectedProviderType(vendor ? getVendorProviderType(vendor) : 'OpenAI');
+      providerModal.classList.add('show');
+      requestAnimationFrame(() => {
+        providerNameInput.focus();
+        providerNameInput.select();
+      });
+    }
+
+    function closeProviderModal() {
+      editingVendorId = null;
+      providerModal.classList.remove('show');
+    }
+
+    function closeEditModelModal() {
+      editModelModalMask.style.display = 'none';
+      editModelModalMask.classList.remove('show');
+      state.editingModel = false;
+      state.editingModelIndex = -1;
+    }
+
+    function openEditModelModal(index) {
+      const vendor = getVendor();
+      const model = vendor?.models?.[index];
+      if (!model) return;
+
+      state.editingModel = true;
+      state.editingModelIndex = index;
+      editModelIdInput.value = model.name || '';
+      editModelNameInput.value = model.name || '';
+      editGroupNameInput.value = model.group || '';
+      setSelectedAbilities(editAbilitySelect, Array.isArray(model.tags) && model.tags.length ? model.tags : ['tool']);
+      editModelModalMask.style.display = 'flex';
+      editModelModalMask.classList.add('show');
+    }
+
+    // 添加提供商按钮
+    addVendorBtn.addEventListener('click', () => openProviderModal());
+
+    cancelProviderBtn.addEventListener('click', closeProviderModal);
+
+    confirmProviderBtn.addEventListener('click', async () => {
+      const name = providerNameInput.value.trim();
+      if (!name) {
+        showToast('请输入提供商名称');
+        return;
+      }
+
+      try {
+        confirmProviderBtn.disabled = true;
+        const isEditing = Boolean(editingVendorId);
+        showToast(isEditing ? '正在修改名称...' : '正在添加提供商...');
+
+        let response;
+        if (isEditing) {
+          response = await authFetch(buildApiUrl(`/vendors/${editingVendorId}`), {
+            method: 'PUT',
+            body: JSON.stringify({
+              name,
+              icon: name.substring(0, 1).toUpperCase()
+            })
+          });
+        } else {
+          const selectedType = getSelectedProviderType();
+          const providerConfig = getProviderTypeConfig(selectedType);
+          const apiUrl = providerConfig.defaultBaseUrl;
+          response = await authFetch(buildApiUrl('/vendors'), {
+            method: 'POST',
+            body: JSON.stringify({
+              name,
+              providerType: selectedType,
+              apiUrl,
+              apiKey: '',
+              icon: name.substring(0, 1).toUpperCase(),
+              enabled: true
+            })
+          });
+        }
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || (editingVendorId ? '修改失败' : '添加失败'));
+        }
+
+        const result = await response.json();
+        showToast(editingVendorId ? `已修改为 ${name}` : `提供商 ${name} 已添加`);
+
+        closeProviderModal();
+        await loadVendorsFromBackend();
+        state.selectedVendorId = result.vendor.id;
+        setRememberedSelectedVendorId(state.selectedVendorId);
+        render();
+      } catch (error) {
+        console.error(error);
+        showToast(`${editingVendorId ? '修改失败' : '添加失败'}：${error.message}`);
+      } finally {
+        confirmProviderBtn.disabled = false;
+      }
+    });
+
+    // 点击遮罩关闭弹窗
+    providerModal.addEventListener('click', (e) => {
+      if (e.target === providerModal) {
+        closeProviderModal();
+      }
+    });
+
+    cancelConfirmBtn.addEventListener('click', () => {
+      pendingDeleteId = null;
+      confirmModal.classList.remove('show');
+    });
+
+    confirmDeleteBtn.addEventListener('click', async () => {
+      if (!pendingDeleteId) return;
+      try {
+        await authFetch(buildApiUrl(`/vendors/${pendingDeleteId}`), { method: 'DELETE' });
+        state.vendors = state.vendors.filter(v => String(v.id) !== pendingDeleteId);
+        if (String(state.selectedVendorId) === pendingDeleteId) {
+          state.selectedVendorId = state.vendors[0]?.id || 'public-api';
+        }
+        setRememberedSelectedVendorId(state.selectedVendorId);
+        loadVendorModels(state.selectedVendorId, 'init');
+        renderVendorList();
+        renderHeader();
+        renderModels();
+        showToast('已删除');
+      } catch (err) {
+        console.error('删除失败:', err);
+        showToast('删除失败');
+      }
+      pendingDeleteId = null;
+      confirmModal.classList.remove('show');
+    });
+
+    confirmModal.addEventListener('click', e => {
+      if (e.target === confirmModal) {
+        pendingDeleteId = null;
+        confirmModal.classList.remove('show');
+      }
+    });
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('ai-gateway-theme');
+      if (savedTheme) {
+        document.body.classList.toggle('theme-light', savedTheme === 'light');
+        themeToggle.textContent = savedTheme === 'light' ? '☀️' : '🌙';
+      }
+    }
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle('theme-light');
+      const theme = isLight ? 'light' : 'dark';
+      localStorage.setItem('ai-gateway-theme', theme);
+      themeToggle.textContent = isLight ? '☀️' : '🌙';
+    }
+
+    async function init() {
+      const authValid = await checkAuth();
+      if (!authValid) return;
+      
+      initTheme();
+      themeToggle.addEventListener('click', toggleTheme);
+      state.selectedVendorId = getRememberedSelectedVendorId();
+      
+      showToast('正在加载数据...');
+      const loaded = await loadVendorsFromBackend();
+      renderVendorList();
+      renderHeader();
+
+      if (!loaded || state.vendors.length === 0) {
+        showToast('暂无运营商，请点击左侧"+ 添加"创建');
+      } else {
+        loadVendorModels(state.selectedVendorId, 'init');
+      }
+    }
+
+    // 监听API密钥输入变化，实时保存到后端
+    apiKeyInput.addEventListener('change', async (e) => {
+      const vendor = getVendor();
+      if (vendor) {
+        try {
+          vendor.apiKey = e.target.value;
+          await saveVendorConnection(vendor);
+        } catch (error) {
+          console.error('保存密钥失败:', error);
+        }
+      }
+    });
+
+    // 监听API地址输入变化
+    apiUrlInput.addEventListener('change', async (e) => {
+      const vendor = getVendor();
+      if (vendor) {
+        try {
+          vendor.apiUrl = e.target.value;
+          await saveVendorConnection(vendor);
+        } catch (error) {
+          console.error('保存地址失败:', error);
+        }
+      }
+    });
+
+    document.getElementById('cancelEditModelBtn').addEventListener('click', () => {
+      closeEditModelModal();
+    });
+
+    saveEditModelBtn.addEventListener('click', async () => {
+      const vendor = getVendor();
+      if (!vendor || state.editingModelIndex < 0) return;
+
+      const modelName = editModelNameInput.value.trim();
+      const groupName = editGroupNameInput.value.trim();
+      const abilities = getSelectedAbilities(editAbilitySelect);
+      if (!modelName || !groupName) {
+        showToast('请填写完整信息');
+        return;
+      }
+      if (!abilities.length) {
+        showToast('请至少选择一个能力标签');
+        return;
+      }
+
+      const payload = { group: groupName, name: modelName, tags: abilities };
+      saveEditModelBtn.disabled = true;
+      try {
+        await updateCustomModel(state.editingModelIndex, payload);
+        if (vendor.models[state.editingModelIndex]) {
+          vendor.models[state.editingModelIndex] = { ...vendor.models[state.editingModelIndex], ...payload };
+        }
+        closeEditModelModal();
+        showToast('模型已保存');
+        renderModels();
+      } catch (error) {
+        console.error(error);
+        showToast(`保存失败：${error.message}`);
+      } finally {
+        saveEditModelBtn.disabled = false;
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>
